@@ -1,0 +1,9 @@
+{
+	"description": "A minimal D application.",
+	"license": "MIT",
+	"authors": [
+		"freemorger"
+	],
+	"copyright": "Copyright © 2026, freemorger",
+	"name": "dsyncer"
+}
