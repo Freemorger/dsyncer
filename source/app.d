@@ -13,8 +13,12 @@ int main(string[] args)
         serv.run();
     } else if (args.length > 3 && args[1] == "-con") {
         auto client = new Client();
-        client.connect(getAddress(args[2], args[3].to!ushort)[0]);
-        client.sendloop();
+        client.connect(args[2], args[3].to!ushort);
+        if (args.length > 5 && args[4] == "-f") {
+            client.sendFile(args[5]);
+        } else {
+            client.sendloop();
+        }
     } else {
         usage_msg();
         return 1;

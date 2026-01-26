@@ -1,0 +1,2 @@
+- better client cli (`!exit`, `!say`, `!file`)
+- file transfers using `!file~` or cmd args `-f`

@@ -1,0 +1,3 @@
+- split packages
+- finish unfinished stuff lol
+- readme
