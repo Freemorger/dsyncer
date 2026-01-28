@@ -19,7 +19,6 @@ class Client {
         while (_runs) {
             string input = readln();
             handleCommand(input);
-            //_conn.send(input);
         }
     }
 

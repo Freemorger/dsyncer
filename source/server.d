@@ -7,6 +7,7 @@ class Server {
     const string END_TAG = "DSYNC$END";
     TcpSocket _sock;
     ushort _port;
+    bool _err = false; // error flag 
 
     void inits(ushort port) {
         _port = port;
@@ -19,19 +20,13 @@ class Server {
     void run() {
         _sock.listen(1);
         writefln("Server listening on port %d", _port);
-        auto client = _sock.accept();  // currently only one con supported
-        for (;;) {
-            ubyte[1024] buf;
-            auto ctr = client.receive(buf);
-            if (ctr == Socket.ERROR) {
-                writefln("Connection error");
-                break;
-            } else if (ctr > 0) {
-                matchDataType(buf); // TODO: put here real data buffer
-            } else {
-                break;
-            }
+        Socket client = _sock.accept();  // currently only one con supported
+        while (!_err) {
+            auto buf = getPacket(client);
+            if (!_err) matchDataType(buf); 
         }
+        _sock.close();
+
     }
 
     void matchDataType(ubyte[] buf) {
@@ -46,12 +41,11 @@ class Server {
                 for (uint i = 1; i < buf.length; i++) {
                     ubyte cur = buf[i];
                     if ((cur == 0) && chkEndPattern(buf, i)) {
-                        writefln("break");
                         break;
                     }
                     sbuf ~= cur;
                 }  
-                writefln(sbuf);
+                writeln(sbuf);
                 break;
             }
             case 2: {
@@ -71,6 +65,36 @@ class Server {
         }
         return buf[(start + 1)..end] == END_TAG.representation;
         // adding 1 to avoid 0
+    }
+
+    ubyte[] getPacket(Socket client) {
+        ubyte[] res = [];
+        bool flag = true;
+        while (flag) {
+            ubyte[1024] tmp;
+            auto recvd = client.receive(tmp);
+            writefln("Received: %d bytes", recvd);
+            if (recvd == Socket.ERROR) {
+                throw new Exception("Connection error!");
+                _err = true;
+                return res;
+            } else if (recvd <= 0) {
+                writefln("Connection lost");
+                _err = true; // TODO: await next connection if lost current
+                return res;
+            }
+
+            for (int i = 0; i < recvd; i++) {
+                ubyte cur_b = tmp[i];
+                if (cur_b == 0 && chkEndPattern(tmp, i)) {
+                    writefln("End pattern");
+                    flag = false;
+                }
+                res ~= cur_b;
+                
+            }
+        }
+        return res;
     }
 
     void handleFile(ubyte[] buf) {
@@ -95,6 +119,5 @@ class Server {
         }
 
         std.file.write(namebuf, fbuf);
-        // TODO: get remaining data
     }
 }
