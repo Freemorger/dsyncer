@@ -1,6 +1,2 @@
-- readme
-- few files 
-- await next conn
-- fix file command
-- copy/create dirs on file send
-- recursive dir send
+- use zip
+- maybe some encryptiion?

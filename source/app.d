@@ -15,7 +15,7 @@ int main(string[] args)
         auto client = new Client();
         client.connect(args[2], args[3].to!ushort);
         if (args.length > 5 && args[4] == "-f") {
-            client.sendFile(args[5]);
+            client.sendFiles(args[5..$]);
         } else {
             client.sendloop();
         }

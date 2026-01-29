@@ -8,6 +8,7 @@ class Server {
     TcpSocket _sock;
     ushort _port;
     bool _err = false; // error flag 
+    bool _shouldStop = false;
 
     void inits(ushort port) {
         _port = port;
@@ -20,13 +21,20 @@ class Server {
     void run() {
         _sock.listen(1);
         writefln("Server listening on port %d", _port);
-        Socket client = _sock.accept();  // currently only one con supported
-        while (!_err) {
-            auto buf = getPacket(client);
-            if (!_err) matchDataType(buf); 
-        }
-        _sock.close();
 
+        while (!_shouldStop) {
+            _err = false;
+            Socket client = _sock.accept();  // currently only one con supported
+
+            writefln("Client connected");
+            while (!_err) {
+                auto buf = getPacket(client);
+                if (!_err) matchDataType(buf); 
+            }
+            _sock.close();
+
+            writefln("Client disconnected. Awaiting next connection...");
+        }
     }
 
     void matchDataType(ubyte[] buf) {
@@ -35,7 +43,7 @@ class Server {
             return;
         }
 
-        switch (buf[0]) { // TODO
+        switch (buf[0]) {
             case 1: {
                 string sbuf = "";
                 for (uint i = 1; i < buf.length; i++) {
@@ -87,7 +95,6 @@ class Server {
             for (int i = 0; i < recvd; i++) {
                 ubyte cur_b = tmp[i];
                 if (cur_b == 0 && chkEndPattern(tmp, i)) {
-                    writefln("End pattern");
                     flag = false;
                 }
                 res ~= cur_b;
