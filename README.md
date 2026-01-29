@@ -9,6 +9,6 @@ but i'm not saying scp is any worse. This project is made for fun anyways.
 Run server: `./dsyncer -serv PORT`   
 Connect to server: `./dsyncer -con IP PORT`   
 After connecting normally, you gotta write some commands. Lookup `!help` in 
-game   
+cli    
 If you want to send some files and close connection, connect like this:
 `./dsyncer -con IP PORT -f FILES`   
