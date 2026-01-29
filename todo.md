@@ -1,2 +1,3 @@
-- use zip
+- make verbose mode optional
+- show dload progress (add size to header)
 - maybe some encryptiion?

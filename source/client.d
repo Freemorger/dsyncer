@@ -4,6 +4,7 @@ import std.file;
 import std.string;
 import std.algorithm;
 import std.array;
+import std.zip;
 
 class Client {
     const string END_TAG = "DSYNC$END";
@@ -69,28 +70,43 @@ class Client {
 
 
     void sendFiles(string[] fnames) {
+        auto zip = new ZipArchive();
+
         foreach (fname; fnames) {
             if (!exists(fname)) {
-                writefln("File %s doesn't exist, continuing", fname);
+                // additional newline to protect from \r 
+                writefln("File %s doesn't exist, continuing\n", fname);
                 continue;
             } else {
-                writef("Sending file %s...", fname);
-            }
+                writefln("\rAdding file %s to archive", fname);
+            } 
 
-            ubyte[] buf = [
-                2 // file 
-            ]; // header 
-            buf ~= fname.representation; // adding fname to header 
-            buf ~= [0];
+            auto member = new ArchiveMember();
+            member.name = fname;
+            member.expandedData = cast(ubyte[])read(fname);
+            member.compressionMethod = CompressionMethod.deflate;
 
-            ubyte[] fbuf = cast(ubyte[])read(fname); 
-            buf ~= fbuf; 
-            buf ~= [0];
-            buf ~= END_TAG.representation;
-            _conn.send(buf);
-
-            writefln("\rSending file %s: done.", fname);
+            zip.addMember(member);
         }
+
+        void[] zipDat = zip.build();
+
+        ubyte[] buf = [
+            2 // file 
+        ]; // header 
+        buf ~= "tmp_dsync_arc.zip".representation; // adding fname to header 
+        buf ~= [0];
+
+        ubyte[] fbuf = cast(ubyte[])zipDat; 
+        buf ~= fbuf; 
+        buf ~= [0];
+        buf ~= END_TAG.representation;
+
+        writefln("\rSending compressed data to remote server");
+        _conn.send(buf);
+        writefln("\rCompressed data sent to sever. Total: %d bytes pack, 
+                %d bytes zip",
+                buf.length, zipDat.length);
     }
     
     void sendMsg(string msg) {

@@ -1,7 +1,8 @@
 import std.socket;
-import std.stdio;
+import std.stdio : writefln, write, writeln;
 import std.file;
 import std.string;
+import std.zip;
 
 class Server {
     const string END_TAG = "DSYNC$END";
@@ -31,7 +32,6 @@ class Server {
                 auto buf = getPacket(client);
                 if (!_err) matchDataType(buf); 
             }
-            _sock.close();
 
             writefln("Client disconnected. Awaiting next connection...");
         }
@@ -81,14 +81,14 @@ class Server {
         while (flag) {
             ubyte[1024] tmp;
             auto recvd = client.receive(tmp);
-            writefln("Received: %d bytes", recvd);
+            //writefln("Received: %d bytes", recvd);
             if (recvd == Socket.ERROR) {
                 throw new Exception("Connection error!");
                 _err = true;
                 return res;
             } else if (recvd <= 0) {
                 writefln("Connection lost");
-                _err = true; // TODO: await next connection if lost current
+                _err = true; 
                 return res;
             }
 
@@ -96,8 +96,8 @@ class Server {
                 ubyte cur_b = tmp[i];
                 if (cur_b == 0 && chkEndPattern(tmp, i)) {
                     flag = false;
-                }
-                res ~= cur_b;
+                    break;
+                } else res ~= cur_b;
                 
             }
         }
@@ -119,12 +119,17 @@ class Server {
         int j = i + 1;
         for (; j < buf.length; j++) {
             ubyte cur_byte = buf[j];
-            if (cur_byte == 0) {
-                break;
-            }
             fbuf ~= cur_byte;
         }
 
-        std.file.write(namebuf, fbuf);
+        auto zip = new ZipArchive(fbuf);
+        foreach (name, member; zip.directory) {
+            writefln("\rExtracting: %s", name);
+
+            ubyte[] expanded = zip.expand(member);
+
+            std.file.write(name, expanded);
+        }
+        writefln("Done.");
     }
 }
