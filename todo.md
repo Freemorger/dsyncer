@@ -1,3 +1,3 @@
-- make verbose mode optional
+- finish args parser
 - show dload progress (add size to header)
 - maybe some encryptiion?

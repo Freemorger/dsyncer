@@ -104,9 +104,7 @@ class Client {
 
         writefln("\rSending compressed data to remote server");
         _conn.send(buf);
-        writefln("\rCompressed data sent to sever. Total: %d bytes pack, 
-                %d bytes zip",
-                buf.length, zipDat.length);
+        writefln("\rCompressed data sent to sever.");
     }
     
     void sendMsg(string msg) {

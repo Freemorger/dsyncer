@@ -3,6 +3,7 @@ import std.stdio : writefln, write, writeln;
 import std.file;
 import std.string;
 import std.zip;
+import std.logger;
 
 class Server {
     const string END_TAG = "DSYNC$END";
@@ -10,8 +11,10 @@ class Server {
     ushort _port;
     bool _err = false; // error flag 
     bool _shouldStop = false;
+    bool _verbose = false;
 
-    void inits(ushort port) {
+    void inits(ushort port, bool verbose) {
+        _verbose = verbose;
         _port = port;
         _sock = new TcpSocket();
         assert(_sock.isAlive);
@@ -21,19 +24,19 @@ class Server {
 
     void run() {
         _sock.listen(1);
-        writefln("Server listening on port %d", _port);
+        info("Server listening on port %d", _port);
 
         while (!_shouldStop) {
             _err = false;
             Socket client = _sock.accept();  // currently only one con supported
 
-            writefln("Client connected");
+            info("Client connected");
             while (!_err) {
                 auto buf = getPacket(client);
                 if (!_err) matchDataType(buf); 
             }
 
-            writefln("Client disconnected. Awaiting next connection...");
+            info("Client disconnected. Awaiting next connection...");
         }
     }
 
@@ -61,7 +64,7 @@ class Server {
                 break;
             }
             default:
-                writefln("ERROR: Unknown datatype %u", buf[0]);
+                error("ERROR: Unknown datatype %u", buf[0]);
                 break;
         }
     }
@@ -87,7 +90,7 @@ class Server {
                 _err = true;
                 return res;
             } else if (recvd <= 0) {
-                writefln("Connection lost");
+                info("Connection lost");
                 _err = true; 
                 return res;
             }
@@ -124,12 +127,12 @@ class Server {
 
         auto zip = new ZipArchive(fbuf);
         foreach (name, member; zip.directory) {
-            writefln("\rExtracting: %s", name);
+            infof(_verbose, "Extracting %s", name);
 
             ubyte[] expanded = zip.expand(member);
 
             std.file.write(name, expanded);
         }
-        writefln("Done.");
+        infof(_verbose, "Files received and decompressed, done.");
     }
 }
